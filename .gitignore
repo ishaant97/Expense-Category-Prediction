@@ -1,0 +1,66 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Virtual environment
+env/
+venv/
+.venv/
+ENV/
+
+# Environment variables
+.env
+
+# Pytest cache
+.pytest_cache/
+
+# MyPy
+.mypy_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VSCode settings
+.vscode/
+
+# IDEs
+.idea/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Logs and reports
+logs/
+*.log
+*.sql
+
+# Data and model artifacts (ignore large or generated files)
+# If you want to keep small example datasets in the repo, add them explicitly to source control
+data/*.csv
+data/*.parquet
+models/
+checkpoints/
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.ckpt
+*.pkl
+
+# Notebook output
+*.nbviewer*
+
+# Optional: ignore compiled python files in repo root
+*.pyc
