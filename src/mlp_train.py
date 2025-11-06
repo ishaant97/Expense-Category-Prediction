@@ -67,3 +67,13 @@ print(classification_report(y_test, y_pred,
 
 print("\nConfusion Matrix:")
 print(confusion_matrix(y_test, y_pred, labels=present_labels))
+
+
+# === 9. Save model and encoder ===
+import joblib, os
+
+os.makedirs("../models", exist_ok=True)
+# model.save("../models/expense_mlp_model")
+model.save("../models/expense_mlp_model.keras")
+joblib.dump(le, "../models/label_encoder.joblib")
+print("\n✅ Model and label encoder saved successfully!")
