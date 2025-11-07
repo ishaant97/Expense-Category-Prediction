@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: free
     branch: main
-    buildCommand: "pip install -r requirements.txt && python -c \"import nltk; nltk.download('stopwords'); nltk.download('wordnet'); nltk.download('omw-1.4')\""
+    buildCommand: "pip install -r requirements.txt"
     startCommand: "cd src && python serve_model.py"
     envVars:
       - key: PYTHON_VERSION

@@ -9,12 +9,19 @@ import re
 
 # === NLP Preprocessing Setup ===
 import nltk
+
+# Download NLTK data at runtime (for deployment environments)
+try:
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    print("📥 Downloading NLTK data...")
+    nltk.download('stopwords', quiet=True)
+    nltk.download('wordnet', quiet=True)
+    nltk.download('omw-1.4', quiet=True)
+    print("✅ NLTK data downloaded")
+
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
-
-# nltk.download('stopwords')
-# nltk.download('wordnet')
-# nltk.download('omw-1.4')
 
 # Keep important category-indicating words
 IMPORTANT_WORDS = {'rent', 'food', 'doctor', 'hospital', 'gym', 'movie', 'bus',
