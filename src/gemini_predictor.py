@@ -40,10 +40,11 @@ class GeminiExpensePredictor:
         # Configure Gemini
         genai.configure(api_key=self.api_key)
         
-        # Use Gemini 1.5 Flash model (faster and more cost-effective)
-        # Alternative: 'gemini-1.5-pro' for more complex tasks
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
-        self.model_name = 'gemini-1.5-flash'
+        # Use Gemini 2.5 Flash - fast, cost-effective, and stable
+        # This is the recommended model for simple categorization tasks
+        # Available models checked with your API key on 2025-11-08
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        self.model_name = 'gemini-2.5-flash'
         
         # Create prompt template
         self.prompt_template = """You are an expense categorization expert. 
