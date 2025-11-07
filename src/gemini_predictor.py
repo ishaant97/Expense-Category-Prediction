@@ -40,8 +40,10 @@ class GeminiExpensePredictor:
         # Configure Gemini
         genai.configure(api_key=self.api_key)
         
-        # Use Gemini Pro model
-        self.model = genai.GenerativeModel('gemini-pro')
+        # Use Gemini 1.5 Flash model (faster and more cost-effective)
+        # Alternative: 'gemini-1.5-pro' for more complex tasks
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model_name = 'gemini-1.5-flash'
         
         # Create prompt template
         self.prompt_template = """You are an expense categorization expert. 
@@ -72,7 +74,8 @@ Category:"""
                 "category": str,
                 "confidence": float,
                 "raw_response": str,
-                "model": "gemini-pro"
+                "reasoning": str (optional),
+                "model": "gemini-1.5-flash"
             }
         """
         if not text or not text.strip():
@@ -80,7 +83,7 @@ Category:"""
                 "category": "Miscellaneous",
                 "confidence": 0.0,
                 "error": "Empty text provided",
-                "model": "gemini-pro"
+                "model": self.model_name
             }
         
         try:
@@ -105,7 +108,8 @@ Category:"""
                 "category": category,
                 "confidence": confidence,
                 "raw_response": raw_category,
-                "model": "gemini-pro"
+                "model": self.model_name,
+                "reasoning": raw_category if len(raw_category) > len(category) else None
             }
             
         except Exception as e:
@@ -113,7 +117,7 @@ Category:"""
                 "category": "Miscellaneous",
                 "confidence": 0.0,
                 "error": str(e),
-                "model": "gemini-pro"
+                "model": self.model_name
             }
     
     def _validate_category(self, raw_category: str) -> str:
