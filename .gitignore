@@ -64,3 +64,5 @@ checkpoints/
 
 # Optional: ignore compiled python files in repo root
 *.pyc
+
+GptDocs/
