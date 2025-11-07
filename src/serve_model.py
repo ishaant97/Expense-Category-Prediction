@@ -1,5 +1,6 @@
 # src/serve_model.py
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import tensorflow as tf
 import joblib
 import numpy as np
@@ -70,6 +71,9 @@ except Exception as e:
 
 # === Create Flask app ===
 app = Flask(__name__)
+
+# Enable CORS for all routes (allows your website to make API calls)
+CORS(app)
 
 @app.route("/", methods=["GET"])
 def home():
@@ -362,9 +366,13 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("🚀 Starting Flask API Server...")
     print("=" * 60)
+    
+    # Get port from environment variable (for Render/Heroku deployment)
+    port = int(os.environ.get("PORT", 5000))
+    
     print("📍 Server will be available at:")
-    print("   - Local: http://127.0.0.1:5000")
-    print("   - Network: http://0.0.0.0:5000")
+    print(f"   - Local: http://127.0.0.1:{port}")
+    print(f"   - Network: http://0.0.0.0:{port}")
     print("\n📋 Available endpoints:")
     print("   GET  /              - API info")
     print("   POST /predict       - Predict single expense")
@@ -374,9 +382,11 @@ if __name__ == "__main__":
     print("   GET  /health        - Health check")
     print("=" * 60)
     print("\n💡 Test with:")
-    print('   curl -X POST http://localhost:5000/predict \\')
+    print(f'   curl -X POST http://localhost:{port}/predict \\')
     print('        -H "Content-Type: application/json" \\')
     print('        -d \'{"text": "pizza from dominos"}\'')
     print("\n" + "=" * 60 + "\n")
     
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # For production deployment, disable debug mode
+    debug_mode = os.environ.get("FLASK_ENV") != "production"
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)

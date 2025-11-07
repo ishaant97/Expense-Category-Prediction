@@ -1,0 +1,18 @@
+{
+  "dataset_size": 221,
+  "test_accuracy": 0.8888888888888888,
+  "num_classes": 8,
+  "classes": [
+    "Education",
+    "Entertainment",
+    "Food",
+    "Groceries",
+    "Health",
+    "Rent",
+    "Transport",
+    "Utilities"
+  ],
+  "max_features": 110,
+  "confidence_threshold_recommended": 0.5,
+  "training_epochs": 71
+}

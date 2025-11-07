@@ -46,11 +46,13 @@ logs/
 *.log
 *.sql
 
-# Data and model artifacts (ignore large or generated files)
-# If you want to keep small example datasets in the repo, add them explicitly to source control
+# Data and model artifacts
+# Note: Model files ARE included for deployment
 data/*.csv
-data/*.parquet
-models/
+!data/expenses.csv
+!data/expenses_augmented.csv
+
+# Exclude training checkpoints and temporary models
 checkpoints/
 *.h5
 *.hdf5
@@ -58,6 +60,13 @@ checkpoints/
 *.pth
 *.ckpt
 *.pkl
+
+# Keep the trained model files for deployment
+!models/expense_mlp_best.keras
+!models/label_encoder_best.joblib
+!models/vectorizer_best.joblib
+!models/model_config.json
+!models/training_history_best.json
 
 # Notebook output
 *.nbviewer*
