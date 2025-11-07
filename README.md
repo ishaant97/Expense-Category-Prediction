@@ -20,9 +20,9 @@ A high-accuracy deep learning model and REST API for automatically categorizing 
 - 🛡️ **Smart Fallback** - "Miscellaneous" category for low-confidence predictions
 - 🔧 **Configurable** - Adjustable confidence thresholds via API
 
-## � Table of Contents
+## 📋 Table of Contents
 
-- [Features](#-features)
+- [Live Demo](#-live-demo)
 - [Quick Start](#-quick-start)
 - [API Documentation](#-api-documentation)
 - [Project Structure](#-project-structure)
@@ -30,11 +30,72 @@ A high-accuracy deep learning model and REST API for automatically categorizing 
 - [How It Works](#-how-it-works)
 - [Usage Examples](#-usage-examples)
 - [Training](#-training-your-own-model)
+- [Deployment](#-deployment)
 - [Configuration](#-configuration)
 - [Contributing](#-contributing)
 - [License](#-license)
 
+## 🌐 Live Demo
+
+**API Endpoint:** [https://expense-category-api.onrender.com](https://expense-category-api.onrender.com)
+
+### Try it Now:
+
+```bash
+# Quick test
+curl https://expense-category-api.onrender.com/health
+
+# Categorize an expense
+curl -X POST https://expense-category-api.onrender.com/predict \
+  -H "Content-Type: application/json" \
+  -d '{"text": "pizza from dominos"}'
+
+# Response:
+# {
+#   "success": true,
+#   "predicted_category": "Food",
+#   "confidence": 0.9523,
+#   "is_uncertain": false
+# }
+```
+
+### Interactive Demo:
+
+Visit [https://expense-category-api.onrender.com](https://expense-category-api.onrender.com) in your browser to see API information and available endpoints.
+
+---
+
 ## 🚀 Quick Start
+
+### Option 1: Use the Live API (Recommended)
+
+The API is already deployed and ready to use! No installation needed.
+
+```javascript
+// JavaScript/React
+const API_URL = "https://expense-category-api.onrender.com";
+
+fetch(`${API_URL}/predict`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ text: 'coffee at starbucks' })
+})
+.then(r => r.json())
+.then(data => console.log(data));
+```
+
+```python
+# Python
+import requests
+
+response = requests.post(
+    "https://expense-category-api.onrender.com/predict",
+    json={"text": "uber to airport"}
+)
+print(response.json())
+```
+
+### Option 2: Run Locally
 
 ### Prerequisites
 
@@ -96,7 +157,12 @@ curl -X POST http://localhost:5000/predict \
 
 ## 📡 API Documentation
 
-### Base URL
+### Base URL (Production)
+```
+https://expense-category-api.onrender.com
+```
+
+### Base URL (Local)
 ```
 http://localhost:5000
 ```
@@ -290,8 +356,10 @@ for pred in predictions:
 ### JavaScript Integration
 
 ```javascript
+const API_URL = "https://expense-category-api.onrender.com";
+
 async function categorizeExpense(text) {
-  const response = await fetch('http://localhost:5000/predict', {
+  const response = await fetch(`${API_URL}/predict`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text })
@@ -310,12 +378,12 @@ categorizeExpense("netflix subscription");
 
 ```bash
 # Single prediction
-curl -X POST http://localhost:5000/predict \
+curl -X POST https://expense-category-api.onrender.com/predict \
   -H "Content-Type: application/json" \
   -d '{"text": "electricity bill payment"}'
 
 # Batch prediction
-curl -X POST http://localhost:5000/batch_predict \
+curl -X POST https://expense-category-api.onrender.com/batch_predict \
   -H "Content-Type: application/json" \
   -d '{"texts": ["pizza", "uber", "rent", "gym"]}'
 ```
@@ -368,7 +436,80 @@ another expense,Category
 python train_with_augmented_data.py
 ```
 
-## ⚙️ Configuration
+## 🚢 Deployment
+
+### Production Deployment (Render)
+
+The API is currently deployed on **Render** and accessible at:
+```
+https://expense-category-api.onrender.com
+```
+
+#### Features:
+- ✅ **Auto-deploy** from GitHub main branch
+- ✅ **HTTPS** enabled by default
+- ✅ **CORS** configured for web applications
+- ✅ **Health monitoring** at `/health` endpoint
+- ✅ **Python 3.10.13** runtime
+- ✅ **Free tier** with 750 hours/month
+
+#### Deployment Configuration:
+
+The project includes deployment files:
+- `render.yaml` - Render service configuration
+- `Procfile` - Process configuration
+- `runtime.txt` - Python version specification
+- `.python-version` - Local Python version
+
+#### Manual Deployment:
+
+1. **Fork/Clone** this repository
+2. **Sign up** at [render.com](https://render.com)
+3. **Create New Web Service** and connect your GitHub repo
+4. Render will **auto-detect** the configuration from `render.yaml`
+5. Click **"Deploy"**
+
+The service will:
+- Install dependencies from `requirements.txt`
+- Download NLTK data at runtime
+- Load the pre-trained model
+- Start the Flask API server
+
+#### Environment Variables:
+
+Set these in Render Dashboard:
+```
+PYTHON_VERSION = 3.10.13
+FLASK_ENV = production
+```
+
+#### Monitoring:
+
+- **Logs:** View real-time logs in Render Dashboard
+- **Health Check:** `GET /health`
+- **Metrics:** CPU, memory, and request metrics available
+
+For detailed deployment instructions, see:
+- [`DEPLOYMENT.md`](DEPLOYMENT.md) - Complete Render deployment guide
+- [`CHECKLIST.md`](CHECKLIST.md) - Pre-deployment checklist
+- [`RENDER_FIX.md`](RENDER_FIX.md) - Troubleshooting guide
+
+### Local Deployment
+
+For running locally, see the [Quick Start](#-quick-start) section above.
+
+### Alternative Platforms:
+
+The API can also be deployed to:
+- **Heroku** (use `Procfile`)
+- **Railway** (auto-detects Flask)
+- **Google Cloud Run** (containerized)
+- **AWS Elastic Beanstalk**
+- **DigitalOcean App Platform**
+
+For HuggingFace Spaces deployment (demo UI), see [`DEPLOYMENT_HUGGINGFACE.md`](DEPLOYMENT_HUGGINGFACE.md).
+
+---
 
 ### Model Configuration
 
@@ -388,14 +529,22 @@ Edit `models/model_config.json`:
 
 ### Runtime Configuration (API)
 
+**Production API:**
 ```bash
 # Set custom threshold
-curl -X POST http://localhost:5000/config \
+curl -X POST https://expense-category-api.onrender.com/config \
   -H "Content-Type: application/json" \
   -d '{"confidence_threshold": 0.6}'
 
 # Get current config
-curl http://localhost:5000/config
+curl https://expense-category-api.onrender.com/config
+```
+
+**Local API:**
+```bash
+curl -X POST http://localhost:5000/config \
+  -H "Content-Type: application/json" \
+  -d '{"confidence_threshold": 0.6}'
 ```
 
 ### Environment Variables
@@ -501,23 +650,36 @@ cd src
 python serve_model.py
 ```
 
-**4. Low Accuracy After Training**
+**3. Low Accuracy After Training**
 - Ensure `expenses_augmented.csv` has 200+ samples
 - Check TF-IDF features: should be 100-200
 - Verify IMPORTANT_WORDS are preserved in preprocessing
 - Try increasing epochs or adjusting learning rate
 
-**5. NumPy Version Conflicts**
+**4. NumPy Version Conflicts**
 ```bash
 pip install --upgrade numpy==1.24.3 tensorflow==2.13.0
 ```
+
+**5. Deployment Issues on Render**
+- Check Python version is 3.10+ (not 3.9.0)
+- Ensure model files are committed to Git (not in `.gitignore`)
+- Verify NLTK data downloads at runtime
+- See [`RENDER_FIX.md`](RENDER_FIX.md) for common fixes
+
+**6. API Not Responding (Cold Start)**
+- On free tier, first request after 15 min takes ~30 seconds
+- Subsequent requests are instant
+- Use health check pinging to keep API warm
 
 ### Getting Help
 
 - 📖 See [API_DOCUMENTATION.md](API_DOCUMENTATION.md) for detailed API info
 - ⚡ See [QUICK_START.md](QUICK_START.md) for setup guide
 - 📝 See [SUMMARY.md](SUMMARY.md) for improvement details
-- 🐛 Open an issue on GitHub
+- � See [DEPLOYMENT.md](DEPLOYMENT.md) for deployment guide
+- 🔧 See [RENDER_FIX.md](RENDER_FIX.md) for troubleshooting
+- �🐛 Open an issue on [GitHub](https://github.com/ishaant97/Expense-Category-Prediction/issues)
 
 ## 🤝 Contributing
 
@@ -606,12 +768,13 @@ SOFTWARE.
 ## 📧 Contact
 
 For questions or feedback:
-- GitHub: [@ishaant97](https://github.com/ishaant97)
-- Project: [Expense Category Prediction API](https://github.com/ishaant97/Expense-Category-Prediction)
+- **GitHub:** [@ishaant97](https://github.com/ishaant97)
+- **Project:** [Expense Category Prediction API](https://github.com/ishaant97/Expense-Category-Prediction)
+- **Live API:** [https://expense-category-api.onrender.com](https://expense-category-api.onrender.com)
 
 ---
 
-Made with ❤️ for BillBuddy | 93.33% Accuracy 🎯
+Made with ❤️ for BillBuddy | 93.33% Accuracy 🎯 | [Try the Live API](https://expense-category-api.onrender.com)
 
 ## 🐛 Troubleshooting
 
