@@ -46,19 +46,20 @@ class GeminiExpensePredictor:
         self.model = genai.GenerativeModel('gemini-2.5-flash')
         self.model_name = 'gemini-2.5-flash'
         
-        # Create prompt template
-        self.prompt_template = """You are an expense categorization expert. 
+        # Create prompt template - allows flexible categorization
+        self.prompt_template = """You are an expense categorization expert.
 
-Categorize the following expense description into EXACTLY ONE of these categories:
-{categories}
+Analyze the following expense description and categorize it with a meaningful, specific one-word category.
 
 Expense description: "{expense}"
 
-Rules:
-1. Return ONLY the category name, nothing else
-2. Choose the MOST appropriate category
-3. If uncertain, use "Miscellaneous"
-4. Be consistent with common expense patterns
+Instructions:
+1. Return ONLY ONE WORD - the category name
+2. Use a clear, descriptive category that best represents the expense
+3. Common categories include: Food, Transport, Utilities, Rent, Health, Education, Entertainment, Groceries, Shopping, Fitness, Travel, Insurance, Subscription, Bills, Fuel, Dining, Coffee, etc.
+4. Be specific and meaningful (e.g., "Coffee" instead of just "Food" for Starbucks)
+5. Use title case (capitalize first letter)
+6. Think about what makes sense for financial tracking
 
 Category:"""
     
@@ -88,21 +89,17 @@ Category:"""
             }
         
         try:
-            # Create prompt
-            prompt = self.prompt_template.format(
-                categories=", ".join(self.CATEGORIES),
-                expense=text.strip()
-            )
+            # Create prompt (no longer using predefined categories)
+            prompt = self.prompt_template.format(expense=text.strip())
             
             # Generate response
             response = self.model.generate_content(prompt)
             raw_category = response.text.strip()
             
             # Clean and validate category
-            category = self._validate_category(raw_category)
+            category = self._clean_category(raw_category)
             
-            # Estimate confidence (Gemini doesn't provide confidence scores)
-            # We use heuristics based on response clarity
+            # Estimate confidence based on response quality
             confidence = self._estimate_confidence(raw_category, category)
             
             return {
@@ -121,29 +118,35 @@ Category:"""
                 "model": self.model_name
             }
     
-    def _validate_category(self, raw_category: str) -> str:
+    def _clean_category(self, raw_category: str) -> str:
         """
-        Validate and clean Gemini's response
+        Clean and validate Gemini's response
         
         Args:
             raw_category: Raw response from Gemini
             
         Returns:
-            Validated category name
+            Cleaned category name (one word, title case)
         """
-        # Clean the response
-        cleaned = raw_category.strip().strip('"').strip("'")
+        # Clean the response - remove quotes, extra spaces
+        cleaned = raw_category.strip().strip('"').strip("'").strip()
         
-        # Check if it matches any known category (case-insensitive)
-        for category in self.CATEGORIES:
-            if category.lower() in cleaned.lower():
-                return category
+        # If multiple words, take the first meaningful word
+        # (in case Gemini returned extra text)
+        words = cleaned.split()
+        if words:
+            # Take the first word that looks like a category
+            category = words[0]
+            
+            # Capitalize first letter (title case)
+            category = category.capitalize()
+            
+            # Remove any trailing punctuation
+            category = category.rstrip('.,!?;:')
+            
+            return category
         
-        # If exact match
-        if cleaned in self.CATEGORIES:
-            return cleaned
-        
-        # Default to Miscellaneous if no match
+        # Fallback if somehow empty
         return "Miscellaneous"
     
     def _estimate_confidence(self, raw_response: str, final_category: str) -> float:
@@ -151,30 +154,33 @@ Category:"""
         Estimate confidence based on response clarity
         
         Since Gemini doesn't provide confidence scores, we estimate based on:
-        - Response length (shorter = more confident)
-        - Exact category match
-        - Additional text in response
+        - Response length (one word = high confidence)
+        - Response clarity
+        - Presence of extra explanation
         
         Args:
             raw_response: Raw Gemini response
-            final_category: Validated category
+            final_category: Cleaned category
             
         Returns:
             Estimated confidence (0.0 to 1.0)
         """
-        # If response is just the category name, high confidence
-        if raw_response.strip().strip('"').strip("'") == final_category:
+        # Clean response for comparison
+        cleaned_response = raw_response.strip().strip('"').strip("'")
+        
+        # If response is exactly one word (just the category), very high confidence
+        if len(cleaned_response.split()) == 1:
             return 0.95
         
-        # If category name appears in response, medium-high confidence
-        if final_category.lower() in raw_response.lower():
+        # If response is the category plus minor formatting, high confidence
+        if cleaned_response.lower() == final_category.lower():
+            return 0.90
+        
+        # If response contains the category, medium-high confidence
+        if final_category.lower() in cleaned_response.lower():
             return 0.85
         
-        # If we had to default to Miscellaneous, low confidence
-        if final_category == "Miscellaneous":
-            return 0.50
-        
-        # Default medium confidence
+        # Otherwise, medium confidence
         return 0.75
     
     def batch_predict(self, texts: list) -> list:
