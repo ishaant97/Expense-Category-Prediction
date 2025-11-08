@@ -9,7 +9,7 @@ from typing import Dict, Optional
 class GeminiExpensePredictor:
     """Expense categorization using Google Gemini API"""
     
-    # Supported categories (matching your DL model)
+    # Expanded categories for better expense tracking
     CATEGORIES = [
         "Food",
         "Transport", 
@@ -19,6 +19,17 @@ class GeminiExpensePredictor:
         "Education",
         "Entertainment",
         "Groceries",
+        "Shopping",
+        "Fitness",
+        "Travel",
+        "Insurance",
+        "Subscription",
+        "Bills",
+        "Fuel",
+        "Dining",
+        "Coffee",
+        "Personal Care",
+        "Home",
         "Miscellaneous"
     ]
     
@@ -46,20 +57,27 @@ class GeminiExpensePredictor:
         self.model = genai.GenerativeModel('gemini-2.5-flash')
         self.model_name = 'gemini-2.5-flash'
         
-        # Create prompt template - allows flexible categorization
+        # Create prompt template with expanded categories
         self.prompt_template = """You are an expense categorization expert.
 
-Analyze the following expense description and categorize it with a meaningful, specific one-word category.
+Categorize the following expense description into EXACTLY ONE of these categories:
+{categories}
 
 Expense description: "{expense}"
 
-Instructions:
-1. Return ONLY ONE WORD - the category name
-2. Use a clear, descriptive category that best represents the expense
-3. Common categories include: Food, Transport, Utilities, Rent, Health, Education, Entertainment, Groceries, Shopping, Fitness, Travel, Insurance, Subscription, Bills, Fuel, Dining, Coffee, etc.
-4. Be specific and meaningful (e.g., "Coffee" instead of just "Food" for Starbucks)
-5. Use title case (capitalize first letter)
-6. Think about what makes sense for financial tracking
+Rules:
+1. Return ONLY the category name from the list above, nothing else
+2. Choose the MOST specific and appropriate category
+3. Examples:
+   - Starbucks → Coffee
+   - Netflix → Subscription
+   - Gym → Fitness
+   - Uber → Transport
+   - Doctor visit → Health
+   - Electric bill → Utilities
+   - Amazon shopping → Shopping
+4. If no specific category fits, use "Miscellaneous"
+5. Be consistent with common expense patterns
 
 Category:"""
     
@@ -89,15 +107,18 @@ Category:"""
             }
         
         try:
-            # Create prompt (no longer using predefined categories)
-            prompt = self.prompt_template.format(expense=text.strip())
+            # Create prompt with categories list
+            prompt = self.prompt_template.format(
+                categories=", ".join(self.CATEGORIES),
+                expense=text.strip()
+            )
             
             # Generate response
             response = self.model.generate_content(prompt)
             raw_category = response.text.strip()
             
             # Clean and validate category
-            category = self._clean_category(raw_category)
+            category = self._validate_category(raw_category)
             
             # Estimate confidence based on response quality
             confidence = self._estimate_confidence(raw_category, category)
@@ -118,35 +139,30 @@ Category:"""
                 "model": self.model_name
             }
     
-    def _clean_category(self, raw_category: str) -> str:
+    def _validate_category(self, raw_category: str) -> str:
         """
-        Clean and validate Gemini's response
+        Validate and clean Gemini's response against known categories
         
         Args:
             raw_category: Raw response from Gemini
             
         Returns:
-            Cleaned category name (one word, title case)
+            Validated category name from CATEGORIES list
         """
         # Clean the response - remove quotes, extra spaces
         cleaned = raw_category.strip().strip('"').strip("'").strip()
         
-        # If multiple words, take the first meaningful word
-        # (in case Gemini returned extra text)
-        words = cleaned.split()
-        if words:
-            # Take the first word that looks like a category
-            category = words[0]
-            
-            # Capitalize first letter (title case)
-            category = category.capitalize()
-            
-            # Remove any trailing punctuation
-            category = category.rstrip('.,!?;:')
-            
-            return category
+        # Check for exact match (case-insensitive)
+        for category in self.CATEGORIES:
+            if cleaned.lower() == category.lower():
+                return category
         
-        # Fallback if somehow empty
+        # Check if any category is contained in the response
+        for category in self.CATEGORIES:
+            if category.lower() in cleaned.lower():
+                return category
+        
+        # If no match found, default to Miscellaneous
         return "Miscellaneous"
     
     def _estimate_confidence(self, raw_response: str, final_category: str) -> float:
@@ -155,12 +171,12 @@ Category:"""
         
         Since Gemini doesn't provide confidence scores, we estimate based on:
         - Response length (one word = high confidence)
-        - Response clarity
+        - Exact match with known categories
         - Presence of extra explanation
         
         Args:
             raw_response: Raw Gemini response
-            final_category: Cleaned category
+            final_category: Validated category
             
         Returns:
             Estimated confidence (0.0 to 1.0)
@@ -168,19 +184,23 @@ Category:"""
         # Clean response for comparison
         cleaned_response = raw_response.strip().strip('"').strip("'")
         
-        # If response is exactly one word (just the category), very high confidence
-        if len(cleaned_response.split()) == 1:
+        # If response exactly matches a category, very high confidence
+        if cleaned_response.lower() == final_category.lower():
             return 0.95
         
-        # If response is the category plus minor formatting, high confidence
-        if cleaned_response.lower() == final_category.lower():
+        # If response contains only the category (possibly with formatting), high confidence
+        if final_category.lower() in cleaned_response.lower() and len(cleaned_response.split()) <= 2:
             return 0.90
         
-        # If response contains the category, medium-high confidence
+        # If category was found but with extra text, medium-high confidence
         if final_category.lower() in cleaned_response.lower():
             return 0.85
         
-        # Otherwise, medium confidence
+        # If we defaulted to Miscellaneous, lower confidence
+        if final_category == "Miscellaneous":
+            return 0.60
+        
+        # Default medium confidence
         return 0.75
     
     def batch_predict(self, texts: list) -> list:
