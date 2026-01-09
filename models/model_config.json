@@ -1,6 +1,6 @@
 {
   "dataset_size": 221,
-  "test_accuracy": 0.9333333333333333,
+  "test_accuracy": 0.8888888888888888,
   "num_classes": 8,
   "classes": [
     "Education",
@@ -14,5 +14,5 @@
   ],
   "max_features": 110,
   "confidence_threshold_recommended": 0.5,
-  "training_epochs": 66
+  "training_epochs": 71
 }

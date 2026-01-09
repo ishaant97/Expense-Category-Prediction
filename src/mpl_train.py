@@ -1,9 +1,3 @@
-# src/train_with_augmented_data.py
-"""
-Training script that uses the augmented dataset for better accuracy.
-This script first generates augmented data, then trains the improved model.
-"""
-
 import pandas as pd
 import numpy as np
 import re
@@ -65,18 +59,18 @@ augmented_file = '../data/expenses_augmented.csv'
 
 # Generate augmented dataset
 if not os.path.exists(augmented_file):
-    print("\n📝 Generating augmented dataset...")
+    print("\n Generating augmented dataset...")
     df = augment_dataset(
         input_file='../data/expenses.csv',
         output_file=augmented_file,
         samples_per_category=20
     )
 else:
-    print(f"\n📂 Loading existing augmented dataset from {augmented_file}")
+    print(f"\n Loading existing augmented dataset from {augmented_file}")
     df = pd.read_csv(augmented_file)
 
-print(f"\n📊 Dataset size: {len(df)} samples")
-print(f"📂 Categories: {df['category'].nunique()}")
+print(f"\n Dataset size: {len(df)} samples")
+print(f" Categories: {df['category'].nunique()}")
 print("\nCategory distribution:")
 category_counts = df['category'].value_counts()
 for cat, count in category_counts.items():
@@ -93,10 +87,10 @@ df = df[df["cleaned_description"].str.strip() != ""]
 texts = df["cleaned_description"].tolist()
 labels = df["category"].astype(str).tolist()
 
-print(f"\n✅ Processed {len(texts)} samples")
+print(f"\n Processed {len(texts)} samples")
 
 # Show some examples
-print("\n📝 Sample preprocessed texts:")
+print("\n Sample preprocessed texts:")
 for i in random.sample(range(len(texts)), min(5, len(texts))):
     print(f"  Original: {df.iloc[i]['description']}")
     print(f"  Cleaned:  {texts[i]}")
@@ -107,7 +101,7 @@ le = LabelEncoder()
 y = le.fit_transform(labels)
 num_classes = len(le.classes_)
 
-print(f"🏷️  Classes ({num_classes}): {list(le.classes_)}")
+print(f" Classes ({num_classes}): {list(le.classes_)}")
 
 # === 4. Optimized TF-IDF ===
 print("\n" + "=" * 70)
@@ -116,7 +110,7 @@ print("=" * 70)
 
 # Optimal feature count based on dataset size
 max_features = min(300, len(texts) // 2)
-print(f"\n🔢 TF-IDF Configuration:")
+print(f"\n TF-IDF Configuration:")
 print(f"  Max features: {max_features}")
 print(f"  N-gram range: (1, 2) - unigrams and bigrams")
 print(f"  Min document frequency: 2")
@@ -131,12 +125,12 @@ vectorizer = TfidfVectorizer(
 )
 X = vectorizer.fit_transform(texts).toarray()
 
-print(f"\n✅ Feature matrix shape: {X.shape}")
+print(f"\n Feature matrix shape: {X.shape}")
 print(f"   Samples: {X.shape[0]}, Features: {X.shape[1]}")
 
 # Show top features
 feature_names = vectorizer.get_feature_names_out()
-print(f"\n📊 Sample features: {list(feature_names[:20])}")
+print(f"\n Sample features: {list(feature_names[:20])}")
 
 # === 5. Train/test split ===
 X_train, X_test, y_train, y_test = train_test_split(
@@ -146,7 +140,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     stratify=y
 )
 
-print(f"\n📊 Split: Train={len(X_train)}, Test={len(X_test)}")
+print(f"\n Split: Train={len(X_train)}, Test={len(X_test)}")
 
 # === 6. Class weights ===
 class_weights_array = compute_class_weight(
@@ -156,7 +150,7 @@ class_weights_array = compute_class_weight(
 )
 class_weights = dict(enumerate(class_weights_array))
 
-print("\n⚖️  Class weights:")
+print("\n  Class weights:")
 for idx, weight in class_weights.items():
     print(f"  {le.classes_[idx]:15s}: {weight:.3f}")
 
@@ -189,7 +183,7 @@ model = tf.keras.Sequential([
     tf.keras.layers.Dense(num_classes, activation='softmax')
 ])
 
-print("\n📐 Model architecture:")
+print("\n Model architecture:")
 model.summary()
 
 # === 8. Compile ===
@@ -220,7 +214,7 @@ reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
 )
 
 batch_size = max(16, len(X_train) // 25)
-print(f"\n⚙️  Training configuration:")
+print(f"\n  Training configuration:")
 print(f"  Batch size: {batch_size}")
 print(f"  Max epochs: 150")
 print(f"  Early stopping patience: 20")
@@ -247,7 +241,7 @@ y_pred_confidence = y_pred_probs.max(axis=1)
 
 # Overall metrics
 test_acc = accuracy_score(y_test, y_pred)
-print(f"\n🎯 TEST ACCURACY: {test_acc:.4f} ({test_acc*100:.2f}%)")
+print(f"\n TEST ACCURACY: {test_acc:.4f} ({test_acc*100:.2f}%)")
 
 print(f"\n📈 Training Summary:")
 print(f"  Best val accuracy: {max(history.history['val_accuracy']):.4f}")
@@ -255,26 +249,26 @@ print(f"  Final train accuracy: {history.history['accuracy'][-1]:.4f}")
 print(f"  Epochs trained: {len(history.history['accuracy'])}")
 
 # Confidence analysis
-print(f"\n🎲 Confidence Statistics:")
+print(f"\n Confidence Statistics:")
 print(f"  Mean:   {y_pred_confidence.mean():.3f}")
 print(f"  Median: {np.median(y_pred_confidence):.3f}")
 print(f"  Min:    {y_pred_confidence.min():.3f}")
 print(f"  Max:    {y_pred_confidence.max():.3f}")
 
-print(f"\n📊 Confidence Threshold Analysis:")
+print(f"\n Confidence Threshold Analysis:")
 for threshold in [0.3, 0.4, 0.5, 0.6, 0.7]:
     low = (y_pred_confidence < threshold).sum()
     pct = 100 * low / len(y_test)
     print(f"  Below {threshold}: {low:3d}/{len(y_test)} ({pct:5.1f}%)")
 
 # Classification report
-print(f"\n📋 Classification Report:")
+print(f"\n Classification Report:")
 print(classification_report(y_test, y_pred,
                             target_names=le.classes_,
                             zero_division=0))
 
 # Confusion matrix
-print(f"\n🔢 Confusion Matrix:")
+print(f"\n Confusion Matrix:")
 print("   Rows=True, Cols=Predicted")
 cm = confusion_matrix(y_test, y_pred)
 print("\n   ", "  ".join([f"{c[:4]:>4s}" for c in le.classes_]))
@@ -282,7 +276,7 @@ for i, row in enumerate(cm):
     print(f"{le.classes_[i]:>8s}", "  ".join([f"{val:4d}" for val in row]))
 
 # Per-class accuracy
-print(f"\n🎯 Per-Class Accuracy:")
+print(f"\n Per-Class Accuracy:")
 for i, class_name in enumerate(le.classes_):
     mask = (y_test == i)
     if mask.sum() > 0:
@@ -296,9 +290,9 @@ print("=" * 70)
 
 os.makedirs("../models", exist_ok=True)
 
-model.save("../models/expense_mlp_best.keras")
-joblib.dump(le, "../models/label_encoder_best.joblib")
-joblib.dump(vectorizer, "../models/vectorizer_best.joblib")
+model.save("../models/expense_mlp.keras")
+joblib.dump(le, "../models/label_encoder.joblib")
+joblib.dump(vectorizer, "../models/vectorizer.joblib")
 
 # Save config
 import json
@@ -322,21 +316,21 @@ history_dict = {
     'val_loss': [float(x) for x in history.history['val_loss']]
 }
 
-with open("../models/training_history_best.json", 'w') as f:
+with open("../models/training_history.json", 'w') as f:
     json.dump(history_dict, f, indent=2)
 
-print("\n✅ Saved:")
-print("  📦 ../models/expense_mlp_best.keras")
-print("  📦 ../models/label_encoder_best.joblib")
-print("  📦 ../models/vectorizer_best.joblib")
-print("  📦 ../models/model_config.json")
-print("  📦 ../models/training_history_best.json")
+print("\n Saved:")
+print("   ../models/expense_mlp.keras")
+print("   ../models/label_encoder.joblib")
+print("   ../models/vectorizer.joblib")
+print("   ../models/model_config.json")
+print("   ../models/training_history.json")
 
 print("\n" + "=" * 70)
-print("🎉 TRAINING COMPLETE!")
+print(" TRAINING COMPLETE!")
 print("=" * 70)
-print(f"\n✨ Final Test Accuracy: {test_acc*100:.2f}%")
-print("\n💡 Next steps:")
+print(f"\n Final Test Accuracy: {test_acc*100:.2f}%")
+print("\n Next steps:")
 print("  1. Test predictions: python test_predictions.py")
 print("  2. Deploy model in your application")
 print("  3. Monitor confidence scores for uncertain predictions")
